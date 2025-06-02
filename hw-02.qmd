@@ -1,17 +1,87 @@
 ---
 title: "HW 02"
-author: "INSERT YOUR NAME HERE"
+author: "Matt Osterhoudt"
 format: 
   html:
     embed-resources: true
 toc: true
+execute: 
+  warning: false
+  message: false
+  error: false
 ---
+
+
+## 0 - Setup
+
+```{r setup}
+if (!require("pacman")) 
+  install.packages("pacman")
+
+# use this line for installing/loading
+ pacman::p_load(tidyverse,
+                palmerpenguins,
+                here,
+                cowgrid,
+                dsbox) 
+install.packages("openintro")
+install.packages("ggridges")
+
+library(openintro)
+library(ggridges)
+
+devtools::install_github("tidyverse/dsbox")
+
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+
+knitr::opts_chunk$set(
+  fig.width = 7,
+  fig.asp = .618,
+  fig.retina = 3,
+  fig.align = "center",
+  dpi = 300
+)
+```
+
+
+
 
 ## 1 - A new day, a new plot, a new geom
 
 ```{r}
-#| label: label-me-1
+#| label: Question 1
 
+# Examination of data set
+##glimpse(edibnb)
+
+# Had to add this to purge the "NA" values
+filter_edibnb <- edibnb |>
+  filter(!is.na(neighbourhood), !is.na(review_scores_rating))
+# This will give us the new arrangement of median review scores
+median_order <- filter_edibnb |>
+  group_by(neighbourhood) |>
+  summarise(median_review = median(review_scores_rating, na.rm = TRUE))|>
+  arrange(median_review)
+
+# Reorders based on median levels
+neighborhood_median_order <- filter_edibnb |>
+  mutate(neighbourhood = factor(neighbourhood,  levels = median_order$neighbourhood))
+# Plot
+ggplot(neighborhood_median_order, aes(x = review_scores_rating, y = neighbourhood, fill = neighbourhood)) +
+  geom_density_ridges(alpha = 0.7, scale = 1.1) +
+  theme(legend.position = "none",
+        plot.subtitle = element_text(color = "cornsilk4", size = 10)) + 
+  labs(
+    y = "Neighborhoods",
+    x = "Review Score Rating",
+    linetype = NULL,
+    title = "Airbnb review scores of Edinburgh neighborhoods",
+    subtitle = "Density Ridge Plot" ) 
+ 
+# Interpretation: Here is the density ridge plot, sorted by highest median review score (Morningside)
+# to the lowest (Haymarket). As we can see, the review scores are quite close. The highest scoring 
+# neighborhoods tend to have a "taller" distribution curve, implying a tighter spread of high review scores 
+# compared to the bottom few.
 ```
 
 ## 2 - Foreign Connected PACs
