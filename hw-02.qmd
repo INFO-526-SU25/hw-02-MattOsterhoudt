@@ -352,7 +352,7 @@ ggplot(quarter_median_housing_data, aes(x = year_quarter, y = price, group = 1))
     plot.title = element_text(hjust = -0.5, size = 12),
     plot.subtitle = element_text(hjust = -0.22, size = 11),
     axis.text.x = element_text(size = 8),
-    plot.margin = margin(t = 5, r = 5, b = 25, l = 5, unit = "pt")
+    plot.margin = margin(t = 20, r = 5, b = 25, l = 20, unit = "pt")
   ) + 
   coord_cartesian(ylim = c(300000, 360000), clip = "off")
 
@@ -410,7 +410,32 @@ Source for the trademark idea: https://stackoverflow.com/questions/31040051/how-
 ```{r}
 #| label: Question 5
 
-view(penguins)
+# Normal Plot
+ggplot(penguins, aes(x = bill_length_mm, y = flipper_length_mm, color = species)) +
+  geom_point() + 
+  labs(
+    title = "Bill Length vs. Flipper Length of Penguins\nBy Species",
+    x = "Bill Length(mm)",
+    y = "Flipper Length(mm)"
+  )
+
+# Ugly Plot
+ggplot(penguins, aes(x = bill_length_mm, y = flipper_length_mm, color = species)) +
+  geom_point(size = 6.9) + 
+  labs(
+    title = "BILL VS FLIPPER LENGTH IN MM",
+    x = "Bill Length(mm)",
+    y = "Flipper Length(mm)"
+  ) +
+  scale_color_manual(values = c("Adelie" = "#ba18e7", "Chinstrap" = "#e71864", "Gentoo" = "#eefb07")) +
+  theme(
+    panel.background = element_rect(fill = "#0726fb", color = "purple"),
+    panel.grid.major = element_line(color = "#cb4646", linetype = "twodash"),
+    axis.title = element_text(size = 4, color = "forestgreen"),
+    plot.title = element_text(size = 25, color = "#eaeaea"),
+    axis.text = element_text(size = 10, color = "#ff14f8"),
+    legend.text = element_text(size = 4, color = "#14ffef")
+  )
 
 
 ```
