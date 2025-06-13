@@ -14,7 +14,7 @@ execute:
 
 ## 0 - Setup
 
-```{r setup, include=FALSE}
+```{r setup}
 knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 
 if (!require("pacman")) 
@@ -29,7 +29,8 @@ if (!require("pacman"))
                 fs,
                 janitor,
                 scales,
-                ggforce) 
+                ggforce,
+                glue) 
 install.packages("openintro")
 install.packages("ggridges")
 
@@ -221,7 +222,7 @@ recessions_data$Trough <- as.Date(recessions_data$Trough, format = "%Y-%m-%d")
 
 # First Plot
 ggplot(median_housing_data, aes(x = date, y = price)) + 
-  geom_line(linewidth = 1.1, color = "darkblue") +
+  geom_line(linewidth = 1.1, color = "#4285F4") +
   labs(
     y = "Dollars",
     x = NULL,
@@ -270,7 +271,7 @@ ggplot(median_housing_data, aes(x = date, y = price)) +
     fill = "gray",
     alpha = 0.3
   ) + 
-  geom_line(linewidth = 1.1, color = "darkblue") +
+  geom_line(linewidth = 1.1, color = "#4285F4") +
   labs(
     y = "Dollars",
     x = NULL,
@@ -303,14 +304,58 @@ quarter_median_housing_data <- median_housing_data |>
       month(date) %in% 4:6 ~ "Q2",
       month(date) %in% 7:9 ~ "Q3",
       month(date) %in% 10:12 ~ "Q4",
-    )
+    ),
+    year_quarter = glue("{year} {quarter}")
   )|>
   filter(year == 2019 | year == 2020) # This is needed to filter the range to 2019 and 2020
 
-ggplot(quarter_median_housing_data, aes(x = quarter, y = price)) +
-  geom_line()+
-  geom_point()+
-  scale_x_discrete(limits = c("Q1", "Q2", "Q3", "Q4","Q1", "Q2", "Q3", "Q4"))
+# Third Plot
+ggplot(quarter_median_housing_data, aes(x = year_quarter, y = price, group = 1)) +
+  geom_line(color = "#4285F4", linewidth = 1.2) +
+  geom_point(fill = "white", shape = 21, stroke = .5) +
+  labs(
+    y = "Dollars",
+    x = NULL,
+    title = "Median sales price of houses sold in the United States",
+    subtitle = "Not seasonally adjusted"
+  ) +
+  scale_x_discrete(
+    labels = c("Q1", "Q2", "Q3", "Q4", "Q1", "Q2", "Q3", "Q4"),
+    expand = c(0,0) # Fits the plot to 0,0
+  ) + 
+  scale_y_continuous(
+    labels = comma, #Adds commas to the big numbers
+    breaks = seq(300000, 360000, by = 20000),
+    limits = c(300000, 360000),
+    expand = c(0,0) # Fits the plot to 0,0
+  ) + 
+  annotate(
+    "text",
+    x = 2.5,
+    y = 300000,
+    label = "2019",
+    vjust = 3.5,
+    size = 3,
+    fontface = "plain"
+  ) +
+  annotate(
+    "text",
+    x = 6.5,
+    y = 300000,
+    label = "2020",
+    vjust = 3.5,
+    size = 3,
+    fontface = "plain"
+  ) +
+  theme(
+    axis.title.x = element_text(hjust = 0, size = 10),
+    plot.title = element_text(hjust = -0.5, size = 12),
+    plot.subtitle = element_text(hjust = -0.22, size = 11),
+    axis.text.x = element_text(size = 8),
+    plot.margin = margin(t = 5, r = 5, b = 25, l = 5, unit = "pt")
+  ) + 
+  coord_cartesian(ylim = c(300000, 360000), clip = "off")
+
 
 ```
 I used https://ggplot2.tidyverse.org/reference/scale_date.html#ref-examples and https://www.statology.org/scale_x_date-in-r/ to learn the scale date method.
@@ -361,3 +406,12 @@ Source for the trademark idea: https://stackoverflow.com/questions/31040051/how-
 
 
 ## 5 - Mirror, mirror on the wall, who’s the ugliest of them all?
+
+```{r}
+#| label: Question 5
+
+view(penguins)
+
+
+```
+
