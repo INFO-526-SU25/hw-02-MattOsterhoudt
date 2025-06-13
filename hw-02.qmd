@@ -353,6 +353,8 @@ ggplot(circle_data)+
   
 
 ```
+Approach: So I figured it's just 3 circles laid on top of each other. First thing I did was pull up an image of the Target logo. I found that it was 300x300 pixels. So I used those values for my tribble radius values. The x and y axis points were easy; I simply use 0,0 and plotted right in the middle. I sort of freehand measured the distance between each circle. It seemed roughly equal, so I used increments of 100 for each circle. I was not able to figure out why, but my initial tribble's small red circle would not go on top. So I made another tribble that consisted of only the smaller circle, and laid out another geom_circle. Afterwards, I used geom_text like I have before to place the text. I looked up how to do the trademark symbol in R as well. 
+
 Source for the hex color: https://color-hex.org/color-palettes/167
 Source for the trademark idea: https://stackoverflow.com/questions/31040051/how-to-use-registered-trademark-or-special-symbols-other-than-greek-alphabets
 
