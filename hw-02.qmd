@@ -187,7 +187,7 @@ ggplot(switzerland_summary, aes(x = year, y = total_amount / 1000000, color = pa
   )
 ```
 
-Interpretation: I selected Switzerland as my second visual. It has a similar path of the UK one. We notice a higher level of Republican contributions at first, and we see the gap close around 2008. This visual also sees a sharp decline in republican contributions around the same time, but with a large enough drop that it matches the democrat contributions roughly in 2020
+Interpretation: I selected Switzerland as my second visual. It has a similar path of the UK one. We notice a higher level of Republican contributions at first, and we see the gap close around 2008. This visual also sees a sharp decline in republican contributions around the same time, but with a large enough drop that it matches the democrat contributions roughly in 2020.
 
 I referred to https://search.r-project.org/CRAN/refmans/stringr/html/str_split.html and 
 https://stringr.tidyverse.org/ 
@@ -211,9 +211,108 @@ recessions_data <- read_csv(here("data", "recessions.csv"))
 head(recessions_data)
 head(median_housing_data)
 
+colnames(median_housing_data) <- c("date", "price")
 
+# Converts the columns to date format
+median_housing_data$date <- as.Date(median_housing_data$date, format = "%Y-%m-%d")
+recessions_data$Peak <- as.Date(recessions_data$Peak, format = "%Y-%m-%d")
+recessions_data$Trough <- as.Date(recessions_data$Trough, format = "%Y-%m-%d")
+
+# First Plot
+ggplot(median_housing_data, aes(x = date, y = price)) + 
+  geom_line(linewidth = 1.1, color = "darkblue") +
+  labs(
+    y = "Dollars",
+    x = NULL,
+    title = "Median sales price of houses sold in the United States",
+    caption = "Sources: Census; HUD",
+    subtitle = "Not seasonally adjusted"
+  ) + 
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y" ) + 
+  scale_y_continuous(limits = c(0, 400000),
+                     breaks = seq(0, 400000, by = 40000),
+                     labels = scales::comma
+  ) +
+  theme(
+    legend.position = c(0.9, 0.15),
+    axis.title.x = element_text(hjust = 0, size = 10),
+    plot.caption = element_text(size = 10),
+    plot.title = element_text(hjust = -0.5, size = 12),
+    plot.subtitle = element_text(hjust = -0.22, size = 11),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank()
+  )
+
+# Set the time frame parameters
+start_date <- as.Date("1963-01-01")
+end_date <- as.Date("2021-12-31")
+
+recessions_data <- recessions_data |>
+  mutate(
+    recession_or_not = case_when(
+      Peak >= start_date & Peak <= end_date ~ TRUE,
+      Trough >= start_date & Peak <= end_date ~ TRUE,
+    )
+  ) |>
+  filter(recession_or_not == TRUE) # This is needed to filter the range
+
+# Second Plot
+ggplot(median_housing_data, aes(x = date, y = price)) + 
+  geom_rect(
+    data = recessions_data,
+    aes(
+      xmin = Peak, xmax = Trough,
+      ymin = 0, ymax = Inf
+    ),
+    inherit.aes = FALSE, # Ignores the global setting for this layer
+    fill = "gray",
+    alpha = 0.3
+  ) + 
+  geom_line(linewidth = 1.1, color = "darkblue") +
+  labs(
+    y = "Dollars",
+    x = NULL,
+    title = "Median sales price of houses sold in the United States",
+    caption = "Shaded areas indicate U.S recessions\nSources: Census; HUD",
+    subtitle = "Not seasonally adjusted"
+  ) + 
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y" ) + 
+  scale_y_continuous(limits = c(0, 400000),
+                     breaks = seq(0, 400000, by = 40000),
+                     labels = scales::comma
+  ) +
+  theme(
+    legend.position = c(0.9, 0.15),
+    axis.title.x = element_text(hjust = 0, size = 10),
+    plot.caption = element_text(size = 10),
+    plot.title = element_text(hjust = -0.5, size = 12),
+    plot.subtitle = element_text(hjust = -0.22, size = 11),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+  )
+
+# Wrangling the data to add the year and quarter
+quarter_median_housing_data <- median_housing_data |>
+  mutate(
+    year = year(date),
+    quarter = case_when(
+      month(date) %in% 1:3 ~ "Q1",
+      month(date) %in% 4:6 ~ "Q2",
+      month(date) %in% 7:9 ~ "Q3",
+      month(date) %in% 10:12 ~ "Q4",
+    )
+  )|>
+  filter(year == 2019 | year == 2020) # This is needed to filter the range to 2019 and 2020
+
+ggplot(quarter_median_housing_data, aes(x = quarter, y = price)) +
+  geom_line()+
+  geom_point()+
+  scale_x_discrete(limits = c("Q1", "Q2", "Q3", "Q4","Q1", "Q2", "Q3", "Q4"))
 
 ```
+I used https://ggplot2.tidyverse.org/reference/scale_date.html#ref-examples and https://www.statology.org/scale_x_date-in-r/ to learn the scale date method.
 
 
 ## 4 - Expect More. Plot More.
