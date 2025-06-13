@@ -14,7 +14,9 @@ execute:
 
 ## 0 - Setup
 
-```{r setup}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+
 if (!require("pacman")) 
   install.packages("pacman")
 
@@ -23,7 +25,10 @@ if (!require("pacman"))
                 palmerpenguins,
                 here,
                 cowgrid,
-                dsbox) 
+                dsbox,
+                fs,
+                janitor,
+                scales) 
 install.packages("openintro")
 install.packages("ggridges")
 
@@ -78,20 +83,137 @@ ggplot(neighborhood_median_order, aes(x = review_scores_rating, y = neighbourhoo
     title = "Airbnb review scores of Edinburgh neighborhoods",
     subtitle = "Density Ridge Plot" ) 
  
-# Interpretation: Here is the density ridge plot, sorted by highest median review score (Morningside)
-# to the lowest (Haymarket). As we can see, the review scores are quite close. The highest scoring 
-# neighborhoods tend to have a "taller" distribution curve, implying a tighter spread of high review scores 
-# compared to the bottom few.
 ```
+Interpretation: Here is the density ridge plot, sorted by highest median review score (Morningside) to the lowest (Haymarket). As we can see, the review scores are quite close. The highest scoring neighborhoods tend to have a "taller" distribution curve, implying a tighter spread of high review scores compared to the bottom few.
 
 ## 2 - Foreign Connected PACs
 
 ```{r}
-#| label: label-me-2
+#| label: Question 2
 
+# get a list of files with "Foreign Connected PAC" in their names
+list_of_files <- dir_ls(path = "data", regexp = "Foreign Connected PAC")
+
+
+# read all files and row bind them
+# keeping track of the file name in a new column called year
+pac <- read_csv(list_of_files, id = "year")
+#view(pac)
+
+# cleanse the column names a bit and separates the country of origin/parent company into two columns
+clean_pac <- clean_names(pac)|>
+  separate(`country_of_origin_parent_company`, into = c("country_of_origin", "parent_company"),
+           sep = "/") # I initally forgot this and some of the parent company was getting cut off!
+
+ #view(clean_pac)
+
+cleaner_pac <- clean_pac |>
+mutate(
+  year_string = str_split(year, "-", simplify = TRUE)[, 2],
+  clean_year_string = str_remove(year_string, fixed(".csv")),
+  year = as.integer(clean_year_string),
+  repubs = as.numeric(str_remove(repubs, "\\$")),
+  dems = as.numeric(str_remove(dems, "\\$"))
+) |>
+  select(-year_string, -clean_year_string, -total)
+
+#glimpse(cleaner_pac)
+
+long_cleaner_pac <- cleaner_pac |>
+  pivot_longer(
+    cols = c(dems, repubs),
+    names_to = "party",
+    values_to = "amount"
+  ) |>
+mutate(
+  party = case_when(
+    party == "dems" ~ "Democrat",
+    TRUE ~ "Republican"
+  )
+)
+
+#view(long_cleaner_pac)
+
+uk_summary <- long_cleaner_pac |>
+  filter(country_of_origin == "UK") |>
+  group_by(year, party) |>
+  summarise(total_amount = sum(amount), .groups = "drop")
+
+#view(uk_summary)
+
+ggplot(uk_summary, aes(x = year, y = total_amount / 1000000, color = party)) +
+  geom_line(linewidth = 1.1) +
+  labs(
+    y = "Total amount",
+    x = "Year",
+    title = "Contributions to US political parties from UK-connected PACs",
+    caption = "Source: OpenSecrets.org",
+  ) + 
+  scale_color_manual(name = "Party", values = c("Democrat" = "blue", "Republican" = "red")) +
+  scale_y_continuous(labels = dollar_format(prefix = "$", suffix = "M")) + 
+  theme(
+    legend.position = c(0.9, 0.15),
+    axis.title.x = element_text(hjust = 0, size = 10),
+    axis.title.y = element_text(hjust = 0, size = 10),
+    plot.caption = element_text(size = 10),
+    plot.title = element_text(size = 12)
+  )
+  
+  
+
+switzerland_summary <- long_cleaner_pac |>
+  filter(country_of_origin == "Switzerland") |>
+  group_by(year, party) |>
+  summarise(total_amount = sum(amount), .groups = "drop")
+
+#view(switzerland_summary)
+
+ggplot(switzerland_summary, aes(x = year, y = total_amount / 1000000, color = party)) +
+  geom_line(linewidth = 1.1) +
+  labs(
+    y = "Total amount",
+    x = "Year",
+    title = "Contributions to US political parties from Switzerland-connected PACs",
+    caption = "Source: OpenSecrets.org",
+  ) + 
+  scale_color_manual(name = "Party", values = c("Democrat" = "blue", "Republican" = "red")) +
+  scale_y_continuous(labels = dollar_format(prefix = "$", suffix = "M")) + 
+  theme(
+    legend.position = c(0.9, 0.15),
+    axis.title.x = element_text(hjust = 0, size = 10),
+    axis.title.y = element_text(hjust = 0, size = 10),
+    plot.caption = element_text(size = 10),
+    plot.title = element_text(size = 12)
+  )
 ```
 
+Interpretation: I selected Switzerland as my second visual. It has a similar path of the UK one. We notice a higher level of Republican contributions at first, and we see the gap close around 2008. This visual also sees a sharp decline in republican contributions around the same time, but with a large enough drop that it matches the democrat contributions roughly in 2020
+
+I referred to https://search.r-project.org/CRAN/refmans/stringr/html/str_split.html and 
+https://stringr.tidyverse.org/ 
+This code takes the initial year column, which is a string, and splits it into two
+using "-" so I can get the second year listed. Str_split will split the string into two, 
+and simplify = TRUE returns the matrix. I want the second half that comes after the "-"
+Afterwards, remove the .csv and convert string to integer.
+
+I also referred to https://datavizpyr.com/dollar-format-for-axis-labels-with-ggplot2/ to figure out how to add a dollar sign on the y axis. Just a simple dollar_format function
+
+I referred to https://www.geeksforgeeks.org/r-language/move-axis-labels-in-ggplot-in-r/ to adjust axis title.
+
 ## 3 - Median housing prices in the US
+
+```{r}
+#| label: Question 3
+
+median_housing_data <- read_csv(here("data", "median-housing.csv"))
+recessions_data <- read_csv(here("data", "recessions.csv"))
+
+head(recessions_data)
+head(median_housing_data)
+
+
+
+```
 
 
 ## 4 - Expect More. Plot More.
