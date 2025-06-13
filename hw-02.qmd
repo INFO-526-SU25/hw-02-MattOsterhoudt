@@ -28,7 +28,8 @@ if (!require("pacman"))
                 dsbox,
                 fs,
                 janitor,
-                scales) 
+                scales,
+                ggforce) 
 install.packages("openintro")
 install.packages("ggridges")
 
@@ -316,6 +317,45 @@ I used https://ggplot2.tidyverse.org/reference/scale_date.html#ref-examples and 
 
 
 ## 4 - Expect More. Plot More.
+
+```{r}
+#| label: Question 4
+
+circle_data <- tribble(
+  ~x0, ~y0, ~r, ~fill,
+  0,     0,   300,  "#cc0000",        #outer red
+  0,     0,   200,   "#ffffff",     #white
+  0,     0,   100,   "#cc0000"    #inner red
+) 
+
+glimpse(circle_data)
+
+inner_red_circle_data <- tribble(
+  ~x0, ~y0, ~r, ~fill,
+  0,     0,   100,   "#cc0000"    #inner red
+) 
+
+ggplot(circle_data)+
+  geom_circle(aes(x0 = x0, y0 = y0, r = r, fill = fill), color = NA) +
+  scale_fill_identity() + 
+  geom_circle(data = inner_red_circle_data, aes(x0 = x0, y0 = y0, r = r, fill = fill), color = NA) +
+  coord_fixed(xlim = c(-350, 350), ylim = c(-400, 350)) + 
+  theme_void()+
+  geom_text(
+    x = 0,
+    y = -350 - 18,
+    label = "TARGET\u00AE",
+    color = "#cc0000",
+    size = 12,
+    fontface = "bold",
+    hjust = 0.5
+  )
+  
+
+```
+Source for the hex color: https://color-hex.org/color-palettes/167
+Source for the trademark idea: https://stackoverflow.com/questions/31040051/how-to-use-registered-trademark-or-special-symbols-other-than-greek-alphabets
+
 
 
 ## 5 - Mirror, mirror on the wall, who’s the ugliest of them all?
